@@ -81,7 +81,9 @@ def create_a_plot():
   newPlot = Plot()
   newPlot.setValues(min=min.get(), max=max.get(), amplitude=amplitude.get(), frequency=frequency.get(), phaseShift=phaseShift.get())
   newPlot.drawPlot()
+# Buttons
+Button(window, text="Draw a plot", padx=100, pady=5, command=create_a_plot).grid(columnspan=4)
 
-drawPlotButton = Button(window, text="Draw a plot", padx=100, pady=5, command=create_a_plot).grid(columnspan=4)
+# Start the program loop
 window.mainloop()
 
