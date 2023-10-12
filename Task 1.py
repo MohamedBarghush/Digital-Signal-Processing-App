@@ -18,7 +18,7 @@ class Plot:
         for v in self.x:
             self.y.append(self.amplitude*np.cos(2*np.pi*self.frequency*v + self.phaseShift))
 
-    # draw the plot
+    # draw the plot (Debug)
     # def drawPlot(self):
     #     fig = plot.figure()
 
@@ -36,7 +36,7 @@ class Plot:
     #     plot.title('Signal')
     #     plot.show()
 
-    # for debug
+    # Draw the plot
     def drawPlot(self):
         plot.plot(self.x, self.y)
 
@@ -49,6 +49,7 @@ class Plot:
         plot.axvline(x=0, color='k')
         plot.show()
 
+# Create the app window
 window = Tk()
 
 window.title("DSP Task 1")
@@ -75,6 +76,7 @@ Entry(window, text="Amplitude (A)", textvariable=amplitude).grid(row=1, column=1
 Entry(window, text="Frequency (f)", textvariable=frequency).grid(row=2, column=1)
 Entry(window, text="Phase Shift (θ)", textvariable=phaseShift).grid(row=3, column=1)
 
+# Button functionality that creates a plot window
 def create_a_plot():
   newPlot = Plot()
   newPlot.setValues(min=min.get(), max=max.get(), amplitude=amplitude.get(), frequency=frequency.get(), phaseShift=phaseShift.get())
