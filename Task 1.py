@@ -19,32 +19,36 @@ class Plot:
         self.analogFrequency = analogFrequency
         self.phaseShift = phaseShift
         self.amplitude = amplitude
-        self.x = np.array([])
-        self.y = np.array([])
         self.file = file
         self.plotType = plotType
 
     # Draw the plot
     def drawPlot(self):
-        new_window = Toplevel(window)
+        new_window, new_dis_window = Toplevel(window), Toplevel(window)
         new_window.geometry("600x400")
+        new_dis_window.geometry("600x400")
         fig,ax = plot.subplots()
+        fig_dis, ax_dis = plot.subplots()
 
-        self.x = np.linspace(0, 1, self.samplingFrequency)
+        # xCon = np.linspace(0, 1, self.samplingFrequency)
+        xCon = np.arange(0, 1, 1 / self.samplingFrequency)
+        xDis = np.arange(0, 1, 1 / self.samplingFrequency)
         
         if self.waveType == "Sine wave":
             title = "Sine wave representation"
-            equation = "x(t) = A*sin(ω*t + θ)"
-            for t in self.x:
-                self.y = np.append(self.y, self.amplitude*np.sin(2*np.pi*self.analogFrequency*t + self.phaseShift))
+            equation = "Amplitude"
+            self.y = self.amplitude*np.sin(2*np.pi*self.analogFrequency*xCon + self.phaseShift)
+            yDis = self.amplitude*np.sin(2*np.pi*self.analogFrequency*xDis + self.phaseShift)
         else:
             title = "Cosine wave representation"
-            equation = "x(t) = A*cos(ω*t + θ)"
-            for t in self.x:
-                self.y = np.append(self.y, self.amplitude*np.cos(2*np.pi*self.analogFrequency*t + self.phaseShift))
+            equation = "Amplitude"
+            self.y = self.amplitude*np.cos(2*np.pi*self.analogFrequency*xCon + self.phaseShift)
+            yDis = self.amplitude*np.cos(2*np.pi*self.analogFrequency*xDis + self.phaseShift)
 
-        ax.plot(self.x, self.y)
+        ax.plot(xCon, self.y)
+        ax_dis.stem(xDis, yDis)
         ax.set_title(title)
+        ax_dis.set_title(title)
 
         ax.set_xlabel('Time (t)')
         ax.set_ylabel(equation)
@@ -52,13 +56,16 @@ class Plot:
         # ax.axhline(y=0, color='k')
         # ax.axvline(x=0, color='k')
         canvas = FigureCanvasTkAgg(fig, master=new_window)
+        canvas_dis = FigureCanvasTkAgg(fig_dis, master=new_dis_window)
         canvas.draw()
+        canvas_dis.draw()
         canvas.get_tk_widget().pack()
+        canvas_dis.get_tk_widget().pack()
 
     # Read data from a file
     def drawPlotFile (self):
-        self.x = np.array([])
-        self.y = np.array([])
+        x = np.array([])
+        y = np.array([])
         try:
             with open(self.file, 'r') as file:
                 file.readline()
@@ -67,8 +74,8 @@ class Plot:
                 for i in range(0, int(N)):
                     line = file.readline()
                     line = line.split(" ")
-                    self.x = np.append(self.x, float(line[0]))
-                    self.y = np.append(self.y, float(line[1]))
+                    x = np.append(x, float(line[0]))
+                    y = np.append(y, float(line[1]))
         except FileNotFoundError:
             print("Input file not found!")
             return
@@ -80,14 +87,14 @@ class Plot:
         new_window.geometry("600x400")
         fig,ax = plot.subplots()
         if self.plotType == 0:
-            ax.plot(self.x, self.y)
+            ax.plot(x, y)
         else:
-            ax.stem(self.x, self.y)
+            ax.stem(x, y)
 
         ax.set_title('Signal Visualization')
 
         ax.set_xlabel('Time (t)')
-        ax.set_ylabel('x(t) = A*cos(ω*t + θ)')
+        ax.set_ylabel('Amplitude')
         ax.grid(True, which='both')
         ax.axhline(y=0, color='k')
         ax.axvline(x=0, color='k')
@@ -119,9 +126,9 @@ Label(window, text="Amplitude (A)").grid(row=1)
 Label(window, text="Analog Frequency (F)").grid(row=2)
 Label(window, text="Sampling Frequency (Fs)").grid(row=3)
 Label(window, text="Phase Shift (θ)").grid(row=4)
-Label(window, text="-------------------------------------").grid(row=5, columnspan=4)
-Label(window, text="Or").grid(row=6, columnspan=4)
-Label(window, text="-------------------------------------").grid(row=7, columnspan=4)
+Label(window, text="--------------------------------------------------------------------------").grid(row=5, columnspan=4)
+Label(window, text="OR").grid(row=6, columnspan=4)
+Label(window, text="--------------------------------------------------------------------------").grid(row=7, columnspan=4)
 Label(window, text="Drop a file with the data here").grid(row=8)
 Label(window, text="Plot Type (Continous or Discrete)").grid(row=9, column=0)
 
@@ -151,11 +158,11 @@ def clearList ():
     lb.delete(0,END)
 
 # File Entry
-lb = Listbox(window)
+lb = Listbox(window, width=20, height=3)
 lb.drop_target_register(DND_FILES)
 lb.dnd_bind('<<Drop>>', lambda e: lb.insert(END, e.data))
 lb.grid(row=8, column=1)
-Button(window, text="Clear file data", command=clearList).grid(row=8, column=2,columnspan=2)
+Button(window, text="Clear file data", command=clearList, height=3).grid(row=8, column=2,columnspan=2)
 # Radio Buttons
 Radiobutton(window, text="Continous", value=0, variable=plotType).grid(row=9, column=1)
 Radiobutton(window, text="Discrete", value=1, variable=plotType).grid(row=9, column=2)
