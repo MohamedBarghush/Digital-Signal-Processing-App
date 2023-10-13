@@ -1,5 +1,5 @@
-sine
-3
-30
-720
-1.96349540849362
+type = "sin"
+A=3
+AnalogFrequency=360
+SamplingFrequency=720
+PhaseShift = 1.96349540849362
