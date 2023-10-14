@@ -12,7 +12,7 @@ class Plot:
         self.setValues()
 
     # set all the values needed
-    def setValues (self, waveType = "Sine wave", analogFrequency = 100, samplingFrequency = 200, phaseShift = 3.14, amplitude = 1, file="", plotType=0):
+    def setValues (self, waveType = "Sine wave", analogFrequency = 100, samplingFrequency = 200, phaseShift = 3.14, amplitude = 1, file="", plotType=0, duration=1):
         # self.x = np.arange(min, max, 0.001)
         self.waveType = waveType
         self.samplingFrequency = samplingFrequency
@@ -21,6 +21,7 @@ class Plot:
         self.amplitude = amplitude
         self.file = file
         self.plotType = plotType
+        self.duration = duration
 
     # Draw the plot
     def drawPlot(self):
@@ -31,8 +32,8 @@ class Plot:
         fig_dis, ax_dis = plot.subplots()
 
         # xCon = np.linspace(0, 1, self.samplingFrequency)
-        xCon = np.arange(0, 1, 1 / self.samplingFrequency)
-        xDis = np.arange(0, 1, 1 / self.samplingFrequency)
+        xCon = np.arange(0, self.duration, 0.001)
+        xDis = np.arange(0, self.duration, 1 / self.samplingFrequency)
         
         if self.waveType == "Sine wave":
             title = "Sine wave representation"
@@ -116,6 +117,7 @@ samplingFrequency = IntVar(value=2)
 phaseShift = IntVar(value=0)
 file = StringVar(value="")
 plotType = IntVar(value=0)
+duration = IntVar(value=1)
 
 def validate (value):
     return value >= 2*analogFrequency 
@@ -126,11 +128,12 @@ Label(window, text="Amplitude (A)").grid(row=1)
 Label(window, text="Analog Frequency (F)").grid(row=2)
 Label(window, text="Sampling Frequency (Fs)").grid(row=3)
 Label(window, text="Phase Shift (θ)").grid(row=4)
-Label(window, text="--------------------------------------------------------------------------").grid(row=5, columnspan=4)
-Label(window, text="OR").grid(row=6, columnspan=4)
-Label(window, text="--------------------------------------------------------------------------").grid(row=7, columnspan=4)
-Label(window, text="Drop a file with the data here").grid(row=8)
-Label(window, text="Plot Type (Continous or Discrete)").grid(row=9, column=0)
+Label(window, text="Duration (s)").grid(row=5)
+Label(window, text="--------------------------------------------------------------------------").grid(row=6, columnspan=4)
+Label(window, text="OR").grid(row=7, columnspan=4)
+Label(window, text="--------------------------------------------------------------------------").grid(row=8, columnspan=4)
+Label(window, text="Drop a file with the data here").grid(row=9)
+Label(window, text="Plot Type (Continous or Discrete)").grid(row=10, column=0)
 
 # Radio Buttons
 OptionMenu(window, waveType, "Sine wave", "Cosine wave").grid(row=0, column=1)
@@ -139,6 +142,7 @@ Entry(window, text="Amplitude (A)", textvariable=amplitude).grid(row=1, column=1
 Entry(window, text="Analog Frequency (F)", textvariable=analogFrequency).grid(row=2, column=1)
 Entry(window, text="Sampling Frequency (F)", textvariable=samplingFrequency).grid(row=3, column=1)
 Entry(window, text="Phase Shift (θ)", textvariable=phaseShift).grid(row=4, column=1)
+Entry(window, text="Duration (s)", textvariable=duration).grid(row=5, column=1)
 
 # Button functionality that creates a plot window
 def create_a_plot():
@@ -161,11 +165,11 @@ def clearList ():
 lb = Listbox(window, width=20, height=3)
 lb.drop_target_register(DND_FILES)
 lb.dnd_bind('<<Drop>>', lambda e: lb.insert(END, e.data))
-lb.grid(row=8, column=1)
-Button(window, text="Clear file data", command=clearList, height=3).grid(row=8, column=2,columnspan=2)
+lb.grid(row=9, column=1)
+Button(window, text="Clear file data", command=clearList, height=3).grid(row=9, column=2,columnspan=2)
 # Radio Buttons
-Radiobutton(window, text="Continous", value=0, variable=plotType).grid(row=9, column=1)
-Radiobutton(window, text="Discrete", value=1, variable=plotType).grid(row=9, column=2)
+Radiobutton(window, text="Continous", value=0, variable=plotType).grid(row=10, column=1)
+Radiobutton(window, text="Discrete", value=1, variable=plotType).grid(row=10, column=2)
 
 
 # Buttons
