@@ -179,13 +179,13 @@ def create_a_plot():
         try:
             if samplingFrequency.get() >= 2*analogFrequency.get():
                 newPlot = Plot()
-                newPlot.setValues(waveType=waveType.get(), amplitude=amplitude.get(), analogFrequency=analogFrequency.get(), samplingFrequency=samplingFrequency.get(), phaseShift=phaseShift.get())
+                newPlot.setValues(waveType=waveType.get(), amplitude=amplitude.get(), analogFrequency=analogFrequency.get(), samplingFrequency=samplingFrequency.get(), phaseShift=phaseShift.get(), duration=duration.get())
                 newPlot.drawPlot(drawDiscrete=True)
             else:
                 messagebox.showerror('Python Error', 'Error: Sampling Frequency can\'t be less than twice the Analog Frequency')
         except:
             newPlot = Plot()
-            newPlot.setValues(waveType=waveType.get(), amplitude=amplitude.get(), analogFrequency=analogFrequency.get(), samplingFrequency=10, phaseShift=phaseShift.get())
+            newPlot.setValues(waveType=waveType.get(), amplitude=amplitude.get(), analogFrequency=analogFrequency.get(), samplingFrequency=10, phaseShift=phaseShift.get(), duration=duration.get())
             newPlot.drawPlot(drawDiscrete=False)
     else:
         newPlot = Plot()
