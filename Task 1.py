@@ -12,7 +12,7 @@ class Plot:
         self.setValues()
 
     # set all the values needed
-    def setValues (self, waveType = "Sine wave", analogFrequency = 100, samplingFrequency = 200, phaseShift = 3.14, amplitude = 1, file="", plotType=0, duration=1):
+    def setValues (self, waveType = "Sine wave", analogFrequency = 100, samplingFrequency = 200, phaseShift = 3.14, amplitude = 1, file="", duration=1):
         # self.x = np.arange(min, max, 0.001)
         self.waveType = waveType
         self.samplingFrequency = samplingFrequency
@@ -20,16 +20,19 @@ class Plot:
         self.phaseShift = phaseShift
         self.amplitude = amplitude
         self.file = file
-        self.plotType = plotType
         self.duration = duration
 
     # Draw the plot
-    def drawPlot(self):
-        new_window, new_dis_window = Toplevel(window), Toplevel(window)
-        new_window.geometry("600x400")
-        new_dis_window.geometry("600x400")
-        fig,ax = plot.subplots()
-        fig_dis, ax_dis = plot.subplots()
+    def drawPlot(self, drawDiscrete = False):
+        new_window = Toplevel(window)
+        if drawDiscrete:
+            # new_dis_window = Toplevel(window)
+            new_window.geometry("1200x400")
+            fig,ax = plot.subplots(1, 2)
+            # fig_dis, ax_dis = plot.subplots()
+        else:
+            new_window.geometry("600x400")
+            fig,ax = plot.subplots()
 
         # xCon = np.linspace(0, 1, self.samplingFrequency)
         xCon = np.arange(0, self.duration, 0.001)
@@ -38,33 +41,39 @@ class Plot:
         if self.waveType == "Sine wave":
             title = "Sine wave representation"
             equation = "Amplitude"
-            self.y = self.amplitude*np.sin(2*np.pi*self.analogFrequency*xCon + self.phaseShift)
+            yCon = self.amplitude*np.sin(2*np.pi*self.analogFrequency*xCon + self.phaseShift)
             yDis = self.amplitude*np.sin(2*np.pi*self.analogFrequency*xDis + self.phaseShift)
         else:
             title = "Cosine wave representation"
             equation = "Amplitude"
-            self.y = self.amplitude*np.cos(2*np.pi*self.analogFrequency*xCon + self.phaseShift)
+            yCon = self.amplitude*np.cos(2*np.pi*self.analogFrequency*xCon + self.phaseShift)
             yDis = self.amplitude*np.cos(2*np.pi*self.analogFrequency*xDis + self.phaseShift)
 
-        ax.plot(xCon, self.y)
-        ax_dis.stem(xDis, yDis)
-        ax.set_title(title)
-        ax_dis.set_title(title)
+        fig.set_figwidth(15)
+        if drawDiscrete:
+            ax[0].plot(xCon, yCon)
+            ax[1].stem(xDis, yDis)
+            plot.title = title
+            for e in ax:
+                # e.set_title(title)
+                e.set_xlabel('Time (t)')
+                e.set_ylabel(equation)
+                e.grid(True, which='both')
+        else:
+            ax.plot(xCon, yCon)
+            ax.set_title(title)
+            ax.set_xlabel('Time (t)')
+            ax.set_ylabel(equation)
+            ax.grid(True, which='both')
 
-        ax.set_xlabel('Time (t)')
-        ax.set_ylabel(equation)
-        ax.grid(True, which='both')
         # ax.axhline(y=0, color='k')
         # ax.axvline(x=0, color='k')
         canvas = FigureCanvasTkAgg(fig, master=new_window)
-        canvas_dis = FigureCanvasTkAgg(fig_dis, master=new_dis_window)
         canvas.draw()
-        canvas_dis.draw()
         canvas.get_tk_widget().pack()
-        canvas_dis.get_tk_widget().pack()
 
     # Read data from a file
-    def drawPlotFile (self):
+    def drawPlotFile (self, plotType=0):
         x = np.array([])
         y = np.array([])
         try:
@@ -85,20 +94,37 @@ class Plot:
             return
         
         new_window = Toplevel(window)
-        new_window.geometry("600x400")
-        fig,ax = plot.subplots()
-        if self.plotType == 0:
-            ax.plot(x, y)
+        if plotType == 1:
+            new_window.geometry("600x400")
+            fig,ax = plot.subplots()
+            ax.plot(x,y)
+            ax.stem(x,y)
+            ax.set_title('File Visualization')
+
+            ax.set_xlabel('Time (t)')
+            ax.set_ylabel('Amplitude')
+            ax.grid(True, which='both')
+            ax.axhline(y=0, color='k')
+            ax.axvline(x=0, color='k')
+            
         else:
-            ax.stem(x, y)
+            new_window.geometry("1200x400")
+            fig,ax = plot.subplots(1, 2)
+            ax[0].plot(x, y)
+            ax[1].stem(x, y)
 
-        ax.set_title('Signal Visualization')
+            ax[0].set_title('Continous Signal Visualization')
+            ax[1].set_title('Discrete Signal Visualization')
 
-        ax.set_xlabel('Time (t)')
-        ax.set_ylabel('Amplitude')
-        ax.grid(True, which='both')
-        ax.axhline(y=0, color='k')
-        ax.axvline(x=0, color='k')
+            for e in ax:
+                e.set_xlabel('Time (t)')
+                e.set_ylabel('Amplitude')
+                e.grid(True, which='both')
+                e.axhline(y=0, color='k')
+                e.axvline(x=0, color='k')
+
+        fig.set_figwidth(15)
+
         canvas = FigureCanvasTkAgg(fig, master=new_window)
         canvas.draw()
         canvas.get_tk_widget().pack()
@@ -133,7 +159,7 @@ Label(window, text="------------------------------------------------------------
 Label(window, text="OR").grid(row=7, columnspan=4)
 Label(window, text="--------------------------------------------------------------------------").grid(row=8, columnspan=4)
 Label(window, text="Drop a file with the data here").grid(row=9)
-Label(window, text="Plot Type (Continous or Discrete)").grid(row=10, column=0)
+Label(window, text="Visualization Type").grid(row=10, column=0)
 
 # Radio Buttons
 OptionMenu(window, waveType, "Sine wave", "Cosine wave").grid(row=0, column=1)
@@ -147,16 +173,21 @@ Entry(window, text="Duration (s)", textvariable=duration).grid(row=5, column=1)
 # Button functionality that creates a plot window
 def create_a_plot():
     if lb.get(0) == "":
-        if samplingFrequency.get() >= 2*analogFrequency.get():
+        try:
+            if samplingFrequency.get() >= 2*analogFrequency.get():
+                newPlot = Plot()
+                newPlot.setValues(waveType=waveType.get(), amplitude=amplitude.get(), analogFrequency=analogFrequency.get(), samplingFrequency=samplingFrequency.get(), phaseShift=phaseShift.get())
+                newPlot.drawPlot(drawDiscrete=True)
+            else:
+                messagebox.showerror('Python Error', 'Error: Sampling Frequency can\'t be less than twice the Analog Frequency')
+        except:
             newPlot = Plot()
-            newPlot.setValues(waveType=waveType.get(), amplitude=amplitude.get(), analogFrequency=analogFrequency.get(), samplingFrequency=samplingFrequency.get(), phaseShift=phaseShift.get())
-            newPlot.drawPlot()
-        else:
-            messagebox.showerror('Python Error', 'Error: Sampling Frequency can\'t be less than twice the Analog Frequency')
+            newPlot.setValues(waveType=waveType.get(), amplitude=amplitude.get(), analogFrequency=analogFrequency.get(), samplingFrequency=10, phaseShift=phaseShift.get())
+            newPlot.drawPlot(drawDiscrete=False)
     else:
         newPlot = Plot()
-        newPlot.setValues(file=lb.get(0), plotType=plotType.get())
-        newPlot.drawPlotFile()
+        newPlot.setValues(file=lb.get(0))
+        newPlot.drawPlotFile(plotType=plotType.get())
 
 def clearList ():
     lb.delete(0,END)
@@ -168,11 +199,16 @@ lb.dnd_bind('<<Drop>>', lambda e: lb.insert(END, e.data))
 lb.grid(row=9, column=1)
 Button(window, text="Clear file data", command=clearList, height=3).grid(row=9, column=2,columnspan=2)
 # Radio Buttons
-Radiobutton(window, text="Continous", value=0, variable=plotType).grid(row=10, column=1)
-Radiobutton(window, text="Discrete", value=1, variable=plotType).grid(row=10, column=2)
+Radiobutton(window, text="Split", value=0, variable=plotType).grid(row=10, column=1)
+Radiobutton(window, text="On Top", value=1, variable=plotType).grid(row=10, column=2)
 
 
 # Buttons
 Button(window, text="Draw a plot", padx=100, pady=5, command=create_a_plot).grid(columnspan=4)
-# Start the program loop
+
+def closing_cbk():
+    # Shutdown procedure
+    window.quit()
+    window.destroy()
+window.protocol("WM_DELETE_WINDOW", closing_cbk)
 window.mainloop()
