@@ -37,17 +37,20 @@ class Plot:
         # xCon = np.linspace(0, 1, self.samplingFrequency)
         xCon = np.arange(0, self.duration, 0.001)
         xDis = np.arange(0, self.duration, 1 / self.samplingFrequency)
+        # xDis = np.append(xDis, 1)
         
         if self.waveType == "Sine wave":
             title = "Sine wave representation"
             equation = "Amplitude"
             yCon = self.amplitude*np.sin(2*np.pi*self.analogFrequency*xCon + self.phaseShift)
             yDis = self.amplitude*np.sin(2*np.pi*self.analogFrequency*xDis + self.phaseShift)
+            # yDis[-1] = 0
         else:
             title = "Cosine wave representation"
             equation = "Amplitude"
             yCon = self.amplitude*np.cos(2*np.pi*self.analogFrequency*xCon + self.phaseShift)
             yDis = self.amplitude*np.cos(2*np.pi*self.analogFrequency*xDis + self.phaseShift)
+            # yDis[-1] = 0
 
         fig.set_figwidth(15)
         if drawDiscrete:
