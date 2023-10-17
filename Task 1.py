@@ -1,3 +1,4 @@
+# Hello World
 import numpy as np
 from tkinter import *
 from tkinter import messagebox
@@ -13,7 +14,6 @@ class Plot:
 
     # set all the values needed
     def setValues (self, waveType = "Sine wave", analogFrequency = 100, samplingFrequency = 200, phaseShift = 3.14, amplitude = 1, file="", duration=1):
-        # self.x = np.arange(min, max, 0.001)
         self.waveType = waveType
         self.samplingFrequency = samplingFrequency
         self.analogFrequency = analogFrequency
