@@ -35,7 +35,10 @@ class Plot:
             fig,ax = plot.subplots()
 
         # xCon = np.linspace(0, 1, self.samplingFrequency)
-        xCon = np.arange(0, self.duration, 0.001)
+        if drawDiscrete:
+            xCon = np.arange(0, self.duration, 1 / self.samplingFrequency)
+        else:
+            xCon = np.arange(0, self.duration, 0.001)
         xDis = np.arange(0, self.duration, 1 / self.samplingFrequency)
         # xDis = np.append(xDis, 1)
         
