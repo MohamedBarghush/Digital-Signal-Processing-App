@@ -5,6 +5,7 @@ from tkinter import messagebox
 from tkinterdnd2 import DND_FILES,  TkinterDnD
 import matplotlib.pyplot as plot
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from subprocess import Popen
 
 # Prepare the plot
 class Plot:
@@ -35,10 +36,7 @@ class Plot:
             fig,ax = plot.subplots()
 
         # xCon = np.linspace(0, 1, self.samplingFrequency)
-        if drawDiscrete:
-            xCon = np.arange(0, self.duration, 1 / self.samplingFrequency)
-        else:
-            xCon = np.arange(0, self.duration, 0.001)
+        xCon = np.arange(0, self.duration, 0.001)
         xDis = np.arange(0, self.duration, 1 / self.samplingFrequency)
         # xDis = np.append(xDis, 1)
         
@@ -135,120 +133,10 @@ class Plot:
         canvas.draw()
         canvas.get_tk_widget().pack()
 
-    # Read data from a file
-    def Add (self, file1 = "", file2 = "", operation = 0, file3 = ""):
-        file1Val = {}
-        file2Val = {}
-        x1 = np.array([])
-        y1 = np.array([])
-        x2 = np.array([])
-        y2 = np.array([])
-        with open(file1, 'r') as file:
-            file.readline()
-            file.readline()
-            N = file.readline()
-            for i in range(0, int(N)):
-                line = file.readline()
-                line = line.split(" ")
-                file1Val[line[0]] = int(line[1])
-                x1 = np.append(x1, int(line[0]))
-                y1 = np.append(y1, int(line[1]))
-        
-        with open(file2, 'r') as file:
-            file.readline()
-            file.readline()
-            N = file.readline()
-            for i in range(0, int(N)):
-                line = file.readline()
-                line = line.split(" ")
-                file2Val[line[0]] = int(line[1])
-                x2 = np.append(x2, int(line[0]))
-                y2 = np.append(y2, int(line[1]))
-
-        if file3 != "":
-            x3 = np.array([])
-            y3 = np.array([])
-            with open(file3, 'r') as file:
-                file.readline()
-                file.readline()
-                N = file.readline()
-                for i in range(0, int(N)):
-                    line = file.readline()
-                    line = line.split(" ")
-                    x3 = np.append(x3, int(line[0]))
-                    y3 = np.append(y3, int(line[1]))
-
-
-        result_dict = {}
-        for key in file1Val:
-            if key in file2Val:
-                if operation == 0:
-                    result_dict[key] = file1Val[key] + file2Val[key]
-                elif operation == 1:
-                    result_dict[key] = file1Val[key] - file2Val[key]
-            else:
-                result_dict[key] = file1Val[key]
-
-        for key in file2Val:
-            if key not in file1Val:
-                result_dict[key] = file2Val[key]
-        
-        result_dict_x = np.array(list(result_dict.keys()), dtype='int')
-        result_dict_y = np.array(list(result_dict.values()), dtype='int')
-
-        combined_x = np.union1d(x1, x2)
-        combined_y = np.union1d(y1,y2)
-        combined_y = np.union1d(y1,result_dict_y)
-
-        combined_x_range = np.linspace(min(combined_x), max(combined_x), num=15)
-        combined_y_range = np.linspace(min(combined_y), max(combined_y), num=15)
-        
-        new_window = Toplevel(window)
-        new_window.geometry("1200x800")
-        fig,ax = plot.subplots(2, 2)
-
-        ax[0][0].plot(x1, y1)
-        ax[0][1].plot(x2, y2)
-        ax[1][0].plot(result_dict_x, result_dict_y)
-
-        if file3 != "":
-            ax[1][1].plot(x3, y3)
-
-        ax[0][0].set_xticks(combined_x_range)
-        ax[0][1].set_xticks(combined_x_range)
-        ax[1][0].set_xticks(combined_x_range)
-        
-        if file3 != "":
-            ax[1][1].set_xticks(combined_x_range)
-
-        ax[0][0].set_yticks(combined_y_range)
-        ax[0][1].set_yticks(combined_y_range)
-        ax[1][0].set_yticks(combined_y_range)
-        
-        if file3 != "":
-            ax[1][1].set_yticks(combined_y_range)
-
-        ax[0][0].set_title('Signal 1')
-        ax[0][1].set_title('Signal 2')
-        ax[1][0].set_title("Combined signals")
-
-        if file3 != "":
-            ax[1][1].set_title("Original signal")
-
-        fig.set_figwidth(15)
-        fig.set_figheight(20)
-        fig.tight_layout(pad=5.0)
-
-        canvas = FigureCanvasTkAgg(fig, master=new_window)
-        canvas.draw()
-        canvas.get_tk_widget().pack()
-
-        
-
 # Create the app window
 window = TkinterDnD.Tk()
 
-window.title("DSP Task 1 & 2")
+window.title("DSP Task 1")
 window.minsize(210, 100)
 
 # Entries Variables
@@ -260,8 +148,6 @@ phaseShift = IntVar(value=0)
 file = StringVar(value="")
 plotType = IntVar(value=0)
 duration = IntVar(value=1)
-
-mulitplyFactor = IntVar(value=0)
 
 def validate (value):
     return value >= 2*analogFrequency 
@@ -304,34 +190,12 @@ def create_a_plot():
             newPlot.drawPlot(drawDiscrete=False)
     else:
         newPlot = Plot()
-        newPlot.setValues(file=lb.get(0))
+        newFile = lb.get(0)
+        newFile = newFile.replace("{", "")
+        newFile = newFile.replace("}", "")
+        print(newFile)
+        newPlot.setValues(file=newFile)
         newPlot.drawPlotFile(plotType=plotType.get())
-
-def perform_add ():
-    if lb.get(0) != "" and lb.get(1) != "":
-        newPlot = Plot()
-        newPlot.Add(lb.get(0)[1:-1], lb.get(1)[1:-1], 0, lb.get(2)[1:-1])
-    else:
-        messagebox.showerror('Python Error', 'Error: You need to have at least 2 files to add together!')
-
-
-def perform_subtract ():
-    if lb.get(0) != "" and lb.get(1) != "":
-        newPlot = Plot()
-        newPlot.Add(lb.get(0)[1:-1], lb.get(1)[1:-1], 1, lb.get(2)[1:-1])
-    else:
-        messagebox.showerror('Python Error', 'Error: You need to have at least 2 files to subtract from each together!')
-
-def perform_multiply ():
-    if lb.get(0) != "":
-        newPlot = Plot()
-        newPlot.Add(lb.get(0)[1:-1], lb.get(1)[1:-1], 0)
-
-def perform_square ():
-    if lb.get(0) != "" and mulitplyFactor != 0:
-        newPlot = Plot()
-        newPlot.Add(lb.get(0)[1:-1], lb.get(1)[1:-1], 0)
-
 
 def clearList ():
     lb.delete(0,END)
@@ -346,20 +210,14 @@ Button(window, text="Clear file data", command=clearList, height=3).grid(row=9, 
 Radiobutton(window, text="Split", value=0, variable=plotType).grid(row=10, column=1)
 Radiobutton(window, text="On Top", value=1, variable=plotType).grid(row=10, column=2)
 
-Button(window, text="Draw a plot", padx=120, pady=10, command=create_a_plot).grid(row=11, columnspan=4)
-
-Label(window, text="--------------------------------------------------------------------------").grid(row=12, columnspan=4)
-Label(window, text="OR").grid(row=13, columnspan=4)
-Label(window, text="--------------------------------------------------------------------------").grid(row=14, columnspan=4)
-
-Button(window, text="+", padx=120, pady=10, command=perform_add).grid(row=15, columnspan=3)
-Button(window, text="-", padx=120, pady=10, command=perform_subtract).grid(row=16, columnspan=3)
-Button(window, text="*", padx=60, pady=10, command=perform_multiply).grid(row=17, column=1, columnspan=2)
-Entry(window, textvariable=mulitplyFactor, width=60).grid(row=18, column=0, columnspan=2)
-Button(window, text="^2", padx=120, pady=10, command=perform_square).grid(row=19, columnspan=3)
-
 
 # Buttons
+Button(window, text="Draw a plot", padx=100, pady=5, command=create_a_plot).grid(columnspan=4)
+
+def switch_window ():
+    Popen(['python', r'C:\Users\Cinos\Desktop\Digital-Signal-Processing-App\Task 2.py'])
+
+Button(window, text="Operations", command=switch_window).grid(columnspan=4)
 
 def closing_cbk():
     # Shutdown procedure
