@@ -5,7 +5,6 @@ from tkinter import messagebox
 from tkinterdnd2 import DND_FILES,  TkinterDnD
 import matplotlib.pyplot as plot
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from subprocess import Popen
 
 # Prepare the plot
 class Plot:
@@ -136,7 +135,7 @@ class Plot:
 # Create the app window
 window = TkinterDnD.Tk()
 
-window.title("DSP Task 1")
+window.title("Task 1")
 window.minsize(210, 100)
 
 # Entries Variables
@@ -213,11 +212,6 @@ Radiobutton(window, text="On Top", value=1, variable=plotType).grid(row=10, colu
 
 # Buttons
 Button(window, text="Draw a plot", padx=100, pady=5, command=create_a_plot).grid(columnspan=4)
-
-def switch_window ():
-    Popen(['python', r'C:\Users\Cinos\Desktop\Digital-Signal-Processing-App\Task 2.py'])
-
-Button(window, text="Operations", command=switch_window).grid(columnspan=4)
 
 def closing_cbk():
     # Shutdown procedure
