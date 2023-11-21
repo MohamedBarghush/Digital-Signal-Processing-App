@@ -35,7 +35,11 @@ def DCT(x):
     return results
 
 def remove_dc_component(x):
-    return x - np.mean(x)
+    x_list = np.array([])
+    mean_value = np.mean(x)
+    for x_val in x:
+        x_list = np.append(x_list, x_val - mean_value)
+    return x_list
 
 
 
@@ -88,16 +92,13 @@ def browse_file():
 
             plot_signals(time, signal_data[:, 1], processed_signal, operation_combo_box.get())
 
-            # Enable the input for the number of coefficients
             num_coefficients_label.config(state='normal')
             num_coefficients_text.config(state='normal')
             save_button.config(state='normal')
 
-            # Display the number of coefficients in the GUI
             num_coefficients_text.delete(0, END)
             num_coefficients_text.insert(0, str(len(processed_signal)))
 
-            # Save selected coefficients to a text file
             global processed_signal_global
             processed_signal_global = processed_signal
 
