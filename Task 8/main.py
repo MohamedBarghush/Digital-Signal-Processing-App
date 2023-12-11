@@ -5,6 +5,7 @@ import math
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from Convolution.ConvTest import ConvTest
+from Fast_Correlation.CompareSignal import Compare_Signals
 
 def open_file():
     file_path = filedialog.askopenfilename()
@@ -47,34 +48,51 @@ def IDFT(X):
 
     return signal
 
+# Task 2
+def fast_cross_correlation(x1, x2):
+    N = len(x1)
+
+    X1 = DFT(x1)
+    X2 = DFT(x2)
+
+    X1_conj = np.conjugate(X1)
+    result_conj = X1_conj * X2
+    
+    result = IDFT(result_conj) / N
+
+    x_values_result = np.arange(0, N)
+
+    # print (x_values_result)
+    # print (fast_corr_result.real*2/N)
+    Compare_Signals("Fast_Correlation/Corr_Output.txt", x_values_result,result.real)
+
+    return result.real
+
+
+# Task 1
 def convolution(x_values1, y_values1, x_values2, y_values2):
     len1 = len(y_values1)
     len2 = len(y_values2)
 
-    # Append zeros to the signals
-    padded_len = len1 + len2 - 1
-    y_values1_padded = np.pad(y_values1, (0, padded_len - len1), 'constant')
-    y_values2_padded = np.pad(y_values2, (0, padded_len - len2), 'constant')
+    extended_len = len1 + len2 - 1
+    y_values1_padded = np.pad(y_values1, (0, extended_len - len1))
+    y_values2_padded = np.pad(y_values2, (0, extended_len - len2))
 
-    # Compute DFT of the padded signals
     Y1 = DFT(y_values1_padded)
     Y2 = DFT(y_values2_padded)
 
-    # Multiply the two signals in the frequency domain
     result_freq_domain = Y1 * Y2
 
-    # Compute IDFT of the multiplication result
     result_time_domain = IDFT(result_freq_domain)
 
-    # Extract the x_values for the result
     start_index = int(min(x_values1))
-    x_values_result = np.arange(start_index, start_index + padded_len)
+    x_values_result = np.arange(start_index, start_index + extended_len)
 
     ConvTest(x_values_result, result_time_domain.real)
 
     return x_values_result, result_time_domain.real
 
-def plot_signals(x1, y1, x2, y2, result_x, result):
+def plot_signals(x1, y1, x2, y2, result_x, result, operation):
     fig, ax = plt.subplots(3, 1, figsize=(8, 6))
 
     ax[0].plot(x1, y1, label='Signal 1')
@@ -83,8 +101,8 @@ def plot_signals(x1, y1, x2, y2, result_x, result):
     ax[1].plot(x2, y2, label='Signal 2')
     ax[1].set_title('Signal 2')
 
-    ax[2].plot(result_x, result, label='Convolution Result', color='red')
-    ax[2].set_title('Convolution Result')
+    ax[2].plot(result_x, result, label=f'{operation} Result', color='red')
+    ax[2].set_title(f'{operation} Result')
 
     for axis in ax:
         axis.legend()
@@ -98,8 +116,8 @@ class SignalConvolutionApp:
         self.master = master
         self.master.title("Signal Convolution App")
 
-        self.signal1_button = Button(self.master, text="Load Signal 1", command=self.load_signal1)
-        self.signal1_button.pack()
+        self.x1_button = Button(self.master, text="Load Signal 1", command=self.load_x1)
+        self.x1_button.pack()
 
         self.signal2_button = Button(self.master, text="Load Signal 2", command=self.load_signal2)
         self.signal2_button.pack()
@@ -107,7 +125,10 @@ class SignalConvolutionApp:
         self.convolve_button = Button(self.master, text="Perform Convolution", command=self.perform_convolution)
         self.convolve_button.pack()
 
-    def load_signal1(self):
+        self.autocorr_button = Button(self.master, text="Perform Autocorrelation", command=self.perform_autocorrelation)
+        self.autocorr_button.pack()
+
+    def load_x1(self):
         self.x_values1, self.y_values1 = open_file()
 
     def load_signal2(self):
@@ -115,7 +136,11 @@ class SignalConvolutionApp:
 
     def perform_convolution(self):
         x_result, result = convolution(self.x_values1, self.y_values1, self.x_values2, self.y_values2)
-        plot_signals(self.x_values1, self.y_values1, self.x_values2, self.y_values2, x_result, result)
+        plot_signals(self.x_values1, self.y_values1, self.x_values2, self.y_values2, x_result, result, "Fast-Convolution")
+
+    def perform_autocorrelation(self):
+        autocorr_result = fast_cross_correlation(self.y_values1, self.y_values2)
+        plot_signals(self.x_values1, self.y_values1, [], [], np.arange(len(autocorr_result)), autocorr_result, "Fast-Correlation")
 
 if __name__ == "__main__":
     root = Tk()
