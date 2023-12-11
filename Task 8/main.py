@@ -116,16 +116,16 @@ class SignalConvolutionApp:
         self.master = master
         self.master.title("Signal Convolution App")
 
-        self.x1_button = Button(self.master, text="Load Signal 1", command=self.load_x1)
+        self.x1_button = Button(self.master, text="Load Signal 1", width=40, height=3, command=self.load_x1)
         self.x1_button.pack()
 
-        self.signal2_button = Button(self.master, text="Load Signal 2", command=self.load_signal2)
+        self.signal2_button = Button(self.master, text="Load Signal 2", width=40, height=3, command=self.load_signal2)
         self.signal2_button.pack()
 
-        self.convolve_button = Button(self.master, text="Perform Convolution", command=self.perform_convolution)
+        self.convolve_button = Button(self.master, text="Perform Convolution", width=40, height=3, command=self.perform_convolution)
         self.convolve_button.pack()
 
-        self.autocorr_button = Button(self.master, text="Perform Autocorrelation", command=self.perform_autocorrelation)
+        self.autocorr_button = Button(self.master, text="Perform Autocorrelation", width=40, height=3, command=self.perform_autocorrelation)
         self.autocorr_button.pack()
 
     def load_x1(self):
