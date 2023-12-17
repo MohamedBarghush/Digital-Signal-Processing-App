@@ -1,8 +1,7 @@
 import numpy as np
-import scipy.signal as signal
 import matplotlib.pyplot as plt
 from tkinter import *
-from tkinter import filedialog, ttk
+from tkinter import filedialog, ttk, messagebox
 import math
 from Practical_task_1.CompareSignal import Compare_Signals
 
@@ -18,34 +17,52 @@ class DSPApp:
         self.fc2_var = DoubleVar(master, value=1500)
         self.transition_band_var = DoubleVar(master, value=500)
         self.input_signal_var = StringVar(master, value='')
+        self.resample = BooleanVar(master, value=False)
+        self.M = IntVar(master, value=0)
+        self.L = IntVar(master, value=0)
 
         # Labels
-        Label(master, text="Filter Type:").grid(row=0, column=0, sticky=W)
-        Label(master, text="Sampling Frequency (FS):").grid(row=1, column=0, sticky=W)
-        Label(master, text="Stop Band Attenuation:").grid(row=2, column=0, sticky=W)
-        Label(master, text="Cutoff Frequency (FC):").grid(row=3, column=0, sticky=W)
-        Label(master, text="Cutoff Frequency 2 (FC2 for Band):").grid(row=4, column=0, sticky=W)
-        Label(master, text="Transition Band:").grid(row=5, column=0, sticky=W)
-        Label(master, text="Input Signal File:").grid(row=6, column=0, sticky=W)
+        Label(master, text="Filters options", font=("Arial", 12, "bold")).grid(row=0, column=0, sticky=W)
+        Label(master, text="Filter Type:").grid(row=1, column=0, sticky=W)
+        Label(master, text="Sampling Frequency (FS):").grid(row=2, column=0, sticky=W)
+        Label(master, text="Stop Band Attenuation:").grid(row=3, column=0, sticky=W)
+        Label(master, text="Cutoff Frequency (FC):").grid(row=4, column=0, sticky=W)
+        Label(master, text="Cutoff Frequency 2 (FC2 for Band):").grid(row=5, column=0, sticky=W)
+        Label(master, text="Transition Band:").grid(row=6, column=0, sticky=W)
+        Label(master, text="Input Signal File:").grid(row=7, column=0, sticky=W)
+        Label(master, text="Resampling options:", font=("Arial", 12, "bold")).grid(row=9, column=0, sticky=W)
+        # Label(master, text="Resample?:").grid(row=10, column=0, sticky=W)
+        Label(master, text="Decimation factor (M):").grid(row=11, column=0, sticky=W)
+        Label(master, text="Interpolation factor (L):").grid(row=12, column=0, sticky=W)
 
-        # Entry fields
+        # Filter Type Combo-box
         filter_types = ['Low pass', 'High pass', 'Band pass', 'Band stop']
         self.filter_type_var = StringVar(master, value=filter_types[0])
-        ttk.Combobox(master, textvariable=self.filter_type_var, values=filter_types).grid(row=0, column=1)
-        Entry(master, textvariable=self.fs_var).grid(row=1, column=1)
-        Entry(master, textvariable=self.stop_band_attenuation_var).grid(row=2, column=1)
-        Entry(master, textvariable=self.fc_var).grid(row=3, column=1)
-        Entry(master, textvariable=self.fc2_var).grid(row=4, column=1)
-        Entry(master, textvariable=self.transition_band_var).grid(row=5, column=1)
-        Button(master, command=self.load_input, text="Import").grid(row=6, column=1)
+        ttk.Combobox(master, textvariable=self.filter_type_var, values=filter_types).grid(row=1, column=1, columnspan=2)
+        # Entry fields
+        Entry(master, textvariable=self.fs_var).grid(row=2, column=1, columnspan=2)
+        Entry(master, textvariable=self.stop_band_attenuation_var).grid(row=3, column=1, columnspan=2)
+        Entry(master, textvariable=self.fc_var).grid(row=4, column=1, columnspan=2)
+        Entry(master, textvariable=self.fc2_var).grid(row=5, column=1, columnspan=2)
+        Entry(master, textvariable=self.transition_band_var).grid(row=6, column=1, columnspan=2)
+        Button(master, command=self.load_input, text="Import", width=10).grid(row=7, column=1)
+        Button(master, command=self.clear_input, text="Clear", width=10).grid(row=7, column=2)
+        Label(master).grid(row=8, columnspan=3, pady=3)
+        # Checkbutton(master, variable=self.resample).grid(row=10, column=2)
+        Entry(master, textvariable=self.M).grid(row=11, column=1, columnspan=2)
+        Entry(master, textvariable=self.L).grid(row=12, column=1, columnspan=2)
 
         # Buttons
-        Button(master, text="Load Filter Specs", command=self.load_filter_specs).grid(row=7, column=0, columnspan=2)
-        Button(master, text="Run DSP", command=self.run_dsp).grid(row=8, column=0, columnspan=2)
+        Button(master, text="Load Filter Specs", command=self.load_filter_specs, width=50, height=3).grid(row=13, column=0, columnspan=3)
+        Button(master, text="Filter", command=self.run_dsp, width=50, height=3).grid(row=14, column=0, columnspan=3)
+        Button(master, text="Resample", command=self.run_resample, width=50, height=3).grid(row=15, column=0, columnspan=3)
 
     def load_input (self):
         filename = filedialog.askopenfilename()
         self.input_signal_var.set(filename)
+    
+    def clear_input (self):
+        self.input_signal_var = StringVar(self.master, value="")
 
     def load_filter_specs(self):
         file_path = filedialog.askopenfilename(filetypes=[("Text files", "*.txt")])
@@ -54,7 +71,6 @@ class DSPApp:
             self.filter_type_var.set(filter_specs['FilterType'])
             self.fs_var.set(int(filter_specs['FS']))
             self.stop_band_attenuation_var.set(int(filter_specs['StopBandAttenuation']))
-            # self.fc_var.set(int(filter_specs['FC']))
             self.transition_band_var.set(int(filter_specs['TransitionBand']))
 
             # Update for Band pass and Band stop cases
@@ -82,7 +98,6 @@ class DSPApp:
         else:
             indices, filter_res = design_fir_filter(filter_type, fs, stop_band_attenuation, 0, transition_band, f1, f2)
         plot_signal(indices, filter_res, "Filter Coefficients")
-        # convolution()
 
         # Read input signal from file
         if input_signal_path:
@@ -107,14 +122,46 @@ class DSPApp:
         # Save coefficients to a file
         save_coefficients_to_file(list(zip(indices, filter_res)), "filter_coefficients.txt")
 
-        # Resample signal
-        M = 4
-        L = 2
-        # resampled_signal = resample_signal(input_signal, M, L, len(taps))
-        # plot_signal(resampled_signal, f"Resampled Signal (M={M}, L={L})")
-
         plt.tight_layout()
         plt.show()
+
+    def run_resample (self):
+        # filter_type = self.filter_type_var.get()
+        fs = self.fs_var.get()
+        stop_band_attenuation = self.stop_band_attenuation_var.get()
+        fc = self.fc_var.get()
+        transition_band = self.transition_band_var.get()
+        try:
+            input_signal_path = self.input_signal_var.get()
+        except Exception as e:
+            return messagebox.showerror("no file imported")
+        M = self.M.get()
+        L = self.L.get()
+
+        # Read input signal from file
+        if input_signal_path:
+            input_x = []
+            input_y = []
+            with open(input_signal_path, 'r') as file:
+                for line in file.readlines()[3:]:
+                    data = line.split()
+                    input_x.append(int(data[0]))
+                    input_y.append(float(data[1]))
+                file.close()
+
+        resample_res_x, resample_res_y = resample_signal(input_x, input_y, M, L, 'Low pass', fs, stop_band_attenuation, fc, transition_band)
+        # testing stuff
+        file_path = filedialog.askopenfilename()
+        # Compare_Signals(file_path, indices, filter_res)
+        Compare_Signals(file_path, resample_res_x, resample_res_y)
+
+        # Save coefficients to a file
+        save_coefficients_to_file(list(zip(resample_res_x, resample_res_y)), "resample.txt")
+
+        # plt.tight_layout()
+        # plt.show()
+
+
 
 def round_up_to_odd(number):
     rounded_number = math.ceil(number)
@@ -159,10 +206,13 @@ def design_fir_filter(filter_type, fs, stop_band_attenuation, fc, transition_ban
 
         for n in indices:
             w_n = window_function(stop_band_attenuation, n, N)
+            # print("win", w_n)
             if n == 0:
                 h_d = 2*new_fc
             else:
                 h_d = 2*new_fc * (np.sin(n*2*np.pi*new_fc)/(n*2*np.pi*new_fc))
+                # print("hd",h_d)
+                # print(new_fc)
             h.append(h_d*w_n)
         # [print(row) for row in list(zip(indices, h))]
             
@@ -236,12 +286,11 @@ def convolution(x_values1, y_values1, x_values2, y_values2):
 # applying the filters
 def apply_filter(input_x, input_y, filter_x, filter_y):
     output_x, output_y = convolution(input_x, input_y, filter_x, filter_y)
-    # output_signal = signal.convolve(input_signal, taps, mode='same')
     return output_x, output_y
 
 # plotting
 def plot_signal(x, y, title):
-    fig, ax = plt.subplots()  # Use plt.subplots() to create both figure and axes
+    fig, ax = plt.subplots() 
     
     ax.plot(x, y)
     ax.set_title(title)
@@ -249,7 +298,12 @@ def plot_signal(x, y, title):
     ax.set_ylabel('Amplitude')
 
 def save_coefficients_to_file(coefficients, filename):
-    np.savetxt(filename, coefficients, delimiter=',')
+    with open(filename, 'w') as file:
+        file.write("0\n")
+        file.write("0\n")
+        file.write(f"{len(coefficients)}\n")
+        for coefficient in coefficients:
+            file.write(f"{coefficient[0]} {coefficient[1]}\n")
 
 def read_filter_specifications_from_file(filename):
     with open(filename, 'r') as file:
@@ -262,21 +316,46 @@ def read_filter_specifications_from_file(filename):
 
     return filter_specs
 
-# def resample_signal(input_signal, M, L, N):
-#     if M == 0 and L != 0:
-#         upsampled_signal = signal.resample_poly(input_signal, L, 1)
-#         return apply_filter(upsampled_signal, design_fir_filter('Low pass', 1, 60, 0.5, 0.25))
+def upsample(signal, factor):
+    result = []
+    for element in signal:
+        result.extend([element] + [0] * (factor-1))
+    for i in range(factor-1):
+        result.pop()    
+    return result
 
-#     elif M != 0 and L == 0:
-#         return apply_filter(input_signal, design_fir_filter('Low pass', 1, 60, 0.5, 0.25))
+def resample_signal(input_x, input_y, M, L, filter_type, fs, stop_band_attenuation, fc, transition_band):
+    if M == 0 and L != 0:
+        # Upsample by inserting L-1 zeros between each sample
+        upsampled_signal = upsample(input_y, L)
+        print(upsampled_signal)
+        filtered_x, filtered_y = design_fir_filter(filter_type, fs, stop_band_attenuation, fc, transition_band)
+        return apply_filter(input_x, upsampled_signal, filtered_x, filtered_y)
 
-#     elif M != 0 and L != 0:
-#         upsampled_signal = signal.resample_poly(input_signal, L, 1)
-#         filtered_signal = apply_filter(upsampled_signal, design_fir_filter('Low pass', 1, 60, 0.5, 0.25))
-#         return signal.resample_poly(filtered_signal, 1, M)
+    elif M != 0 and L == 0:
+        # Downsample by taking every Mth sample
+        filtered_x, filtered_y = design_fir_filter(filter_type, fs, stop_band_attenuation, fc, transition_band)
+        output_x, output_y = apply_filter(input_x, input_y, filtered_x, filtered_y)
+        output_x, output_y = output_x[::M], output_y[::M]
 
-#     else:
-#         raise ValueError("Invalid values for M and L")
+        continuous_indices = list(range(min(output_x), min(output_x) + len(output_x)))
+
+        return continuous_indices, output_y
+
+    
+    elif M != 0 and L != 0:
+        # Upsample, filter, and then downsample
+        upsampled_signal = upsample(input_y, L)
+        filtered_x, filtered_y = design_fir_filter(filter_type, fs, stop_band_attenuation, fc, transition_band)
+        filtered_signal_x, filtered_signal_y = apply_filter(input_x, upsampled_signal, filtered_x, filtered_y)
+        filtered_signal_x, filtered_signal_y = filtered_signal_x[::M], filtered_signal_y[::M]
+
+        continuous_indices = list(range(min(filtered_signal_x), min(filtered_signal_x) + len(filtered_signal_x)))
+
+        return continuous_indices, filtered_signal_y
+
+    else:
+        return messagebox.showerror("Invalid values for M and L")
 
 window = Tk()
 app = DSPApp(window)
