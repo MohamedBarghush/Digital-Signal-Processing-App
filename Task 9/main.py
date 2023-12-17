@@ -214,6 +214,7 @@ def design_fir_filter(filter_type, fs, stop_band_attenuation, fc, transition_ban
 
     return indices, h
 
+# Convolve from previous tasks
 def convolution(x_values1, y_values1, x_values2, y_values2):
     len1 = len(y_values1)
     len2 = len(y_values2)
