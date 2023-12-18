@@ -267,10 +267,13 @@ class DSPApp:
         # Perform template matching
         template_matching_result = decide_correlation(result_y, data_A, data_B)
 
-        print("Template Matching Result:", template_matching_result)
+        print("Template Matching Result:\n", template_matching_result)
 
         print("Data A:", data_A)
         print("Data B:", data_B)
+
+        plt.tight_layout()
+        plt.show()
 
 
 
@@ -469,21 +472,6 @@ def resample_signal(input_x, input_y, M, L, filter_type, fs, stop_band_attenuati
 
     else:
         return messagebox.showerror("Invalid values for M and L")
-
-def process_ecg_subjects(subject_folder_A, subject_folder_B, test_folder, Fs, miniF, maxF, newFs):
-    """
-    Process ECG signals for subjects A and B from given folders and classify ECG segments in the test folder.
-
-    Parameters:
-    - subject_folder_A (str): Path to the ECG folder for subject A.
-    - subject_folder_B (str): Path to the ECG folder for subject B.
-    - test_folder (str): Path to the test ECG folder.
-    - Fs (float): Sampling frequency of the ECG signals.
-    - miniF (float): Minimum frequency for the FIR filter band.
-    - maxF (float): Maximum frequency for the FIR filter band.
-    - newFs (float): New sampling frequency for resampling.
-    """
-    # read_
 
 def read_file ():
     file_path = filedialog.askopenfilename()
