@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from tkinter import *
 from tkinter import filedialog, ttk, messagebox
 import math
+from scipy.signal import resample
 from Practical_task_1.CompareSignal import Compare_Signals
 
 class DSPApp:
@@ -31,22 +32,22 @@ class DSPApp:
         #------------------------------------------------------------------------
 
         # Labels
-        Label(master, text="Filters options", font=("Arial", 12, "bold")).grid(row=0, column=0, sticky=W)
-        Label(master, text="Filter Type:").grid(row=1, column=0, sticky=W)
-        Label(master, text="Sampling Frequency (FS):").grid(row=2, column=0, sticky=W)
-        Label(master, text="Stop Band Attenuation:").grid(row=3, column=0, sticky=W)
-        Label(master, text="Cutoff Frequency (FC):").grid(row=4, column=0, sticky=W)
-        Label(master, text="Cutoff Frequency 2 (FC2 for Band):").grid(row=5, column=0, sticky=W)
-        Label(master, text="Transition Band:").grid(row=6, column=0, sticky=W)
-        Label(master, text="Input Signal File:").grid(row=7, column=0, sticky=W)
-        Label(master, text="Resampling options:", font=("Arial", 12, "bold")).grid(row=9, column=0, sticky=W)
-        Label(master, text="Fs:").grid(row=19, column=0, sticky=W)
-        Label(master, text="miniF:").grid(row=20, column=0, sticky=W)
-        Label(master, text="maxF:").grid(row=21, column=0, sticky=W)
-        Label(master, text="newFs:").grid(row=22, column=0, sticky=W)
-        # Label(master, text="Resample?:").grid(row=10, column=0, sticky=W)
-        Label(master, text="Decimation factor (M):").grid(row=11, column=0, sticky=W)
-        Label(master, text="Interpolation factor (L):").grid(row=12, column=0, sticky=W)
+        # Label(master, text="filter").grid(row=0, column=0)
+        Label(master, text="type:").grid(row=1, column=0)
+        Label(master, text="Sampling frequency:").grid(row=2, column=0)
+        Label(master, text="Stop Attenuation:").grid(row=3, column=0)
+        Label(master, text="Cutoff frequency:").grid(row=4, column=0)
+        Label(master, text="Cutoff frequency 2:").grid(row=5, column=0)
+        Label(master, text="Transition band:").grid(row=6, column=0)
+        Label(master, text="File:").grid(row=7, column=0)
+        # Label(master, text="Resampling options:").grid(row=9, column=0)
+        Label(master, text="Fs:").grid(row=19, column=0)
+        Label(master, text="miniF:").grid(row=20, column=0)
+        Label(master, text="maxF:").grid(row=21, column=0)
+        Label(master, text="newFs:").grid(row=22, column=0)
+        # Label(master, text="Resample?:").grid(row=10, column=0)
+        Label(master, text="Decimation factor (M):").grid(row=11, column=0)
+        Label(master, text="Interpolation factor (L):").grid(row=12, column=0)
 
         # Filter Type Combo-box
         filter_types = ['Low pass', 'High pass', 'Band pass', 'Band stop']
@@ -58,20 +59,20 @@ class DSPApp:
         Entry(master, textvariable=self.fc_var).grid(row=4, column=1, columnspan=2)
         Entry(master, textvariable=self.fc2_var).grid(row=5, column=1, columnspan=2)
         Entry(master, textvariable=self.transition_band_var).grid(row=6, column=1, columnspan=2)
-        Button(master, command=self.load_input, text="Import", width=10).grid(row=7, column=1)
-        Button(master, command=self.clear_input, text="Clear", width=10).grid(row=7, column=2)
+        Button(master, command=self.load_input, text="Get File", width=10).grid(row=7, column=1)
+        Button(master, command=self.clear_input, text="Remove", width=10).grid(row=7, column=2)
         Label(master).grid(row=8, columnspan=3, pady=3)
         # Checkbutton(master, variable=self.resample).grid(row=10, column=2)
         Entry(master, textvariable=self.M).grid(row=11, column=1, columnspan=2)
         Entry(master, textvariable=self.L).grid(row=12, column=1, columnspan=2)
 
         # Buttons
-        Button(master, text="Load Filter Specs", command=self.load_filter_specs, width=50, height=3).grid(row=13, column=0, columnspan=3)
-        Button(master, text="Filter", command=self.run_dsp, width=50, height=3).grid(row=14, column=0, columnspan=3)
-        Button(master, text="Resample", command=self.run_resample, width=50, height=3).grid(row=15, column=0, columnspan=3)
-        Label(master, text="-------------------------------------------------------------------------").grid(row=16, column=0, columnspan=3)
-        Label(master, text="ECG options:", font=("Arial", 12, "bold")).grid(row=17, column=0, columnspan=3, sticky=W)
-        Button(master, text="Run ECG", command=self.run_ecg, width=50, height=3).grid(row=18, column=0, columnspan=3)
+        Button(master, text="Filter values", command=self.load_filter_specs, width=10).grid(row=13, column=0, columnspan=3)
+        Button(master, text="Filter", command=self.run_dsp, width=10).grid(row=14, column=0, columnspan=3)
+        Button(master, text="resample", command=self.run_resample, width=10).grid(row=15, column=0, columnspan=3)
+        # Label(master, text="-------------------------------------------------------------------------").grid(row=16, column=0, columnspan=3)
+        # Label(master, text="ECG options:").grid(row=17, column=0, columnspan=3)
+        Button(master, text="ECG", command=self.run_ecg, width=10).grid(row=16, column=0, columnspan=3)
 
         Entry(master, textvariable=self.Fs).grid(row=19, column=1, columnspan=2)
         Entry(master, textvariable=self.miniF).grid(row=20, column=1, columnspan=2)
@@ -217,54 +218,40 @@ class DSPApp:
         return get_samples
     
     def run_ecg (self):
-        # Get values from GUI
         fs = self.Fs.get()
         minF = self.miniF.get()
         maxF = self.maxF.get()
         newFs = self.newFs.get()
 
-        # Validate newFs
-        if newFs < 2 * fs:
-            return messagebox.showerror("Error", "Invalid value for newFs")
-
-        # Open folders and read data
         data_A = self.open_folder("A")
         data_B = self.open_folder("B")
         data_x, data_y = read_file()
 
-        # Plot original signal
+
         plot_signal(data_x, data_y, "Original Signal")
 
-        # Design FIR filter
-        filter_x, filter_y = design_fir_filter("Band pass", fs, 53, 0, 500, minF, maxF)
+        filter_x, filter_y = design_fir_filter("Band pass", fs, 50, 0, 500, minF, maxF)
 
-        # Apply filter to the original signal
         result_x, result_y = apply_filter(data_x, data_y, filter_x, filter_y)
+        if newFs >= 2 * fs:
+            M = int(newFs / fs)
+            L = int(fs / newFs)
+            result_x, result_y = resample_signal(result_x, result_y, M, L, 'Low pass', newFs, 50, 0, 500)
 
-        # Resample the filtered signal
-        M = int(newFs / fs)
-        L = int(fs / newFs)
-        result_x, result_y = resample_signal(result_x, result_y, M, L, 'Low pass', fs, 53, 0, 500)
+        # result_x, result_y = resample_signal(result_x, result_y, fs, newFs)
 
-        # Remove DC component
         result_y = remove_dc_component(result_y)
 
-        # Normalize the signal
         result_y = normalize_signal(result_y)
 
-        # Cross-correlation with itself
         result_y = cross_correlation(result_y, result_y)
 
-        # Plot signal after auto-correlation
         plot_signal(result_x, result_y, "After Auto-correlation")
 
-        # Apply Discrete Cosine Transform (DCT)
         result_y = DCT(result_y)
 
-        # Plot signal after DCT
         plot_signal(result_x, result_y, "After DCT")
 
-        # Perform template matching
         template_matching_result = decide_correlation(result_y, data_A, data_B)
 
         print("Template Matching Result:\n", template_matching_result)
@@ -436,7 +423,8 @@ def upsample(signal, factor):
     for element in signal:
         result.extend([element] + [0] * (factor-1))
     for i in range(factor-1):
-        result.pop()    
+        result.pop() 
+    # print (result)   
     return result
 
 def resample_signal(input_x, input_y, M, L, filter_type, fs, stop_band_attenuation, fc, transition_band):
@@ -462,9 +450,11 @@ def resample_signal(input_x, input_y, M, L, filter_type, fs, stop_band_attenuati
         # Upsample, filter, and then downsample
         upsampled_signal = upsample(input_y, L)
         upsampled_x = upsample(input_x, L)
+        upsampled_x = list(range(min(upsampled_x), min(upsampled_x) + len(upsampled_x)))
         filtered_x, filtered_y = design_fir_filter(filter_type, fs, stop_band_attenuation, fc, transition_band)
         filtered_signal_x, filtered_signal_y = apply_filter(upsampled_x, upsampled_signal, filtered_x, filtered_y)
         filtered_signal_x, filtered_signal_y = filtered_signal_x[::M], filtered_signal_y[::M]
+        print(filtered_signal_y)
 
         continuous_indices = list(range(min(filtered_signal_x), min(filtered_signal_x) + len(filtered_signal_x)))
 
@@ -474,6 +464,7 @@ def resample_signal(input_x, input_y, M, L, filter_type, fs, stop_band_attenuati
         return messagebox.showerror("Invalid values for M and L")
 
 def read_file ():
+
     file_path = filedialog.askopenfilename()
     x_values = []
     y_values = []
@@ -562,6 +553,15 @@ def decide_correlation(test_file, class1_content, class2_content):
         result_text += "\nTemplate matches Subject B"
 
     return result_text
+
+# def resample_signal(input_x, input_y, fs, new_fs):
+        # # Use scipy.signal.resample for resampling
+        # resampled_y = resample(input_y, int(len(input_y) * new_fs / fs))
+
+        # # Adjust resampled x values based on the new sampling rate
+        # resampled_x = np.linspace(input_x[0], input_x[-1], len(resampled_y))
+
+        # return resampled_x, resampled_y
 
 window = Tk()
 app = DSPApp(window)

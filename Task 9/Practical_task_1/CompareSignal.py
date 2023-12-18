@@ -21,10 +21,12 @@ def Compare_Signals(file_name,Your_indices,Your_samples):
     print("Current Output Test file is: ")
     print(file_name)
     print("\n")
-    print(expected_indices)
-    print(Your_indices)
+    print("len(expected_indices)",len(expected_indices))
+    print("len(Your_indices)",len(Your_indices))
+    print
     if (len(expected_samples)!=len(Your_samples)) and (len(expected_indices)!=len(Your_indices)):
         print("Test case failed, your signal have different length from the expected one")
+        print()
         return
     for i in range(len(Your_indices)):
         if(Your_indices[i]!=expected_indices[i]):
