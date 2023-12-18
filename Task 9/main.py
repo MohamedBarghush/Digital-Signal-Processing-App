@@ -32,22 +32,22 @@ class DSPApp:
         #------------------------------------------------------------------------
 
         # Labels
-        # Label(master, text="filter").grid(row=0, column=0)
-        Label(master, text="type:").grid(row=1, column=0)
-        Label(master, text="Sampling frequency:").grid(row=2, column=0)
-        Label(master, text="Stop Attenuation:").grid(row=3, column=0)
-        Label(master, text="Cutoff frequency:").grid(row=4, column=0)
-        Label(master, text="Cutoff frequency 2:").grid(row=5, column=0)
-        Label(master, text="Transition band:").grid(row=6, column=0)
-        Label(master, text="File:").grid(row=7, column=0)
-        # Label(master, text="Resampling options:").grid(row=9, column=0)
-        Label(master, text="Fs:").grid(row=19, column=0)
-        Label(master, text="miniF:").grid(row=20, column=0)
-        Label(master, text="maxF:").grid(row=21, column=0)
-        Label(master, text="newFs:").grid(row=22, column=0)
-        # Label(master, text="Resample?:").grid(row=10, column=0)
-        Label(master, text="Decimation factor (M):").grid(row=11, column=0)
-        Label(master, text="Interpolation factor (L):").grid(row=12, column=0)
+        Label(master, text="Filters options", font=("Arial", 12, "bold")).grid(row=0, column=0, sticky=W)
+        Label(master, text="Filter Type:").grid(row=1, column=0, sticky=W)
+        Label(master, text="Sampling Frequency (FS):").grid(row=2, column=0, sticky=W)
+        Label(master, text="Stop Band Attenuation:").grid(row=3, column=0, sticky=W)
+        Label(master, text="Cutoff Frequency (FC):").grid(row=4, column=0, sticky=W)
+        Label(master, text="Cutoff Frequency 2 (FC2 for Band):").grid(row=5, column=0, sticky=W)
+        Label(master, text="Transition Band:").grid(row=6, column=0, sticky=W)
+        Label(master, text="Input Signal File:").grid(row=7, column=0, sticky=W)
+        Label(master, text="Resampling options:", font=("Arial", 12, "bold")).grid(row=9, column=0, sticky=W)
+        Label(master, text="Fs:").grid(row=19, column=0, sticky=W)
+        Label(master, text="miniF:").grid(row=20, column=0, sticky=W)
+        Label(master, text="maxF:").grid(row=21, column=0, sticky=W)
+        Label(master, text="newFs:").grid(row=22, column=0, sticky=W)
+        # Label(master, text="Resample?:").grid(row=10, column=0, sticky=W)
+        Label(master, text="Decimation factor (M):").grid(row=11, column=0, sticky=W)
+        Label(master, text="Interpolation factor (L):").grid(row=12, column=0, sticky=W)
 
         # Filter Type Combo-box
         filter_types = ['Low pass', 'High pass', 'Band pass', 'Band stop']
@@ -59,20 +59,20 @@ class DSPApp:
         Entry(master, textvariable=self.fc_var).grid(row=4, column=1, columnspan=2)
         Entry(master, textvariable=self.fc2_var).grid(row=5, column=1, columnspan=2)
         Entry(master, textvariable=self.transition_band_var).grid(row=6, column=1, columnspan=2)
-        Button(master, command=self.load_input, text="Get File", width=10).grid(row=7, column=1)
-        Button(master, command=self.clear_input, text="Remove", width=10).grid(row=7, column=2)
+        Button(master, command=self.load_input, text="Import", width=10).grid(row=7, column=1)
+        Button(master, command=self.clear_input, text="Clear", width=10).grid(row=7, column=2)
         Label(master).grid(row=8, columnspan=3, pady=3)
         # Checkbutton(master, variable=self.resample).grid(row=10, column=2)
         Entry(master, textvariable=self.M).grid(row=11, column=1, columnspan=2)
         Entry(master, textvariable=self.L).grid(row=12, column=1, columnspan=2)
 
         # Buttons
-        Button(master, text="Filter values", command=self.load_filter_specs, width=10).grid(row=13, column=0, columnspan=3)
-        Button(master, text="Filter", command=self.run_dsp, width=10).grid(row=14, column=0, columnspan=3)
-        Button(master, text="resample", command=self.run_resample, width=10).grid(row=15, column=0, columnspan=3)
-        # Label(master, text="-------------------------------------------------------------------------").grid(row=16, column=0, columnspan=3)
-        # Label(master, text="ECG options:").grid(row=17, column=0, columnspan=3)
-        Button(master, text="ECG", command=self.run_ecg, width=10).grid(row=16, column=0, columnspan=3)
+        Button(master, text="Load Filter Specs", command=self.load_filter_specs, width=50, height=3).grid(row=13, column=0, columnspan=3)
+        Button(master, text="Filter", command=self.run_dsp, width=50, height=3).grid(row=14, column=0, columnspan=3)
+        Button(master, text="Resample", command=self.run_resample, width=50, height=3).grid(row=15, column=0, columnspan=3)
+        Label(master, text="-------------------------------------------------------------------------").grid(row=16, column=0, columnspan=3)
+        Label(master, text="ECG options:", font=("Arial", 12, "bold")).grid(row=17, column=0, columnspan=3, sticky=W)
+        Button(master, text="Run ECG", command=self.run_ecg, width=50, height=3).grid(row=18, column=0, columnspan=3)
 
         Entry(master, textvariable=self.Fs).grid(row=19, column=1, columnspan=2)
         Entry(master, textvariable=self.miniF).grid(row=20, column=1, columnspan=2)
@@ -237,6 +237,8 @@ class DSPApp:
             M = int(newFs / fs)
             L = int(fs / newFs)
             result_x, result_y = resample_signal(result_x, result_y, M, L, 'Low pass', newFs, 50, 0, 500)
+        else:
+            messagebox.showwarning("Invalid value for newFs")
 
         # result_x, result_y = resample_signal(result_x, result_y, fs, newFs)
 
