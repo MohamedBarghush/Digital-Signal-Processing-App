@@ -5,7 +5,7 @@ def Compare_Signals(file_name,Your_indices,Your_samples):
         line = f.readline()
         line = f.readline()
         line = f.readline()
-        # line = f.readline()
+        line = f.readline()
         while line:
             # process line
             L=line.strip()

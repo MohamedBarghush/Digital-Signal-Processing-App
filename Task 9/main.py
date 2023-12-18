@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from tkinter import *
@@ -21,6 +22,14 @@ class DSPApp:
         self.M = IntVar(master, value=0)
         self.L = IntVar(master, value=0)
 
+        #Task 2 vars ------------------------------------------------------------
+        self.Fs = IntVar(master, value=1000)
+        self.miniF = IntVar(master, value=500)
+        self.maxF = IntVar(master, value=900)
+        self.newFs = IntVar(master, value=1200)
+
+        #------------------------------------------------------------------------
+
         # Labels
         Label(master, text="Filters options", font=("Arial", 12, "bold")).grid(row=0, column=0, sticky=W)
         Label(master, text="Filter Type:").grid(row=1, column=0, sticky=W)
@@ -31,6 +40,10 @@ class DSPApp:
         Label(master, text="Transition Band:").grid(row=6, column=0, sticky=W)
         Label(master, text="Input Signal File:").grid(row=7, column=0, sticky=W)
         Label(master, text="Resampling options:", font=("Arial", 12, "bold")).grid(row=9, column=0, sticky=W)
+        Label(master, text="Fs:").grid(row=19, column=0, sticky=W)
+        Label(master, text="miniF:").grid(row=20, column=0, sticky=W)
+        Label(master, text="maxF:").grid(row=21, column=0, sticky=W)
+        Label(master, text="newFs:").grid(row=22, column=0, sticky=W)
         # Label(master, text="Resample?:").grid(row=10, column=0, sticky=W)
         Label(master, text="Decimation factor (M):").grid(row=11, column=0, sticky=W)
         Label(master, text="Interpolation factor (L):").grid(row=12, column=0, sticky=W)
@@ -56,6 +69,14 @@ class DSPApp:
         Button(master, text="Load Filter Specs", command=self.load_filter_specs, width=50, height=3).grid(row=13, column=0, columnspan=3)
         Button(master, text="Filter", command=self.run_dsp, width=50, height=3).grid(row=14, column=0, columnspan=3)
         Button(master, text="Resample", command=self.run_resample, width=50, height=3).grid(row=15, column=0, columnspan=3)
+        Label(master, text="-------------------------------------------------------------------------").grid(row=16, column=0, columnspan=3)
+        Label(master, text="ECG options:", font=("Arial", 12, "bold")).grid(row=17, column=0, columnspan=3, sticky=W)
+        Button(master, text="Run ECG", command=self.run_ecg, width=50, height=3).grid(row=18, column=0, columnspan=3)
+
+        Entry(master, textvariable=self.Fs).grid(row=19, column=1, columnspan=2)
+        Entry(master, textvariable=self.miniF).grid(row=20, column=1, columnspan=2)
+        Entry(master, textvariable=self.maxF).grid(row=21, column=1, columnspan=2)
+        Entry(master, textvariable=self.newFs).grid(row=22, column=1, columnspan=2)
 
     def load_input (self):
         filename = filedialog.askopenfilename()
@@ -149,7 +170,10 @@ class DSPApp:
                     input_y.append(float(data[1]))
                 file.close()
 
+        plot_signal(input_x, input_y, "Original signal")
+
         resample_res_x, resample_res_y = resample_signal(input_x, input_y, M, L, 'Low pass', fs, stop_band_attenuation, fc, transition_band)
+        plot_signal(resample_res_x, resample_res_y, "Resampling result")
         # testing stuff
         file_path = filedialog.askopenfilename()
         # Compare_Signals(file_path, indices, filter_res)
@@ -158,8 +182,96 @@ class DSPApp:
         # Save coefficients to a file
         save_coefficients_to_file(list(zip(resample_res_x, resample_res_y)), "resample.txt")
 
-        # plt.tight_layout()
-        # plt.show()
+        plt.tight_layout()
+        plt.show()
+
+    def open_folder(self, title):
+        folder_path = filedialog.askdirectory(title=f"Select {title} Folder")
+        return self.process_folder(folder_path)
+    
+    def process_folder(self, folder_path):
+        files_contents = []
+        for filename in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, filename)
+            if os.path.isfile(file_path):
+                content = self.process_file(file_path)
+                files_contents.append(content)
+
+        samples = self.get_samples(files_contents)
+        return samples
+    
+    def process_file(self, file_path):
+        with open(file_path, 'r') as file:
+            content = file.read()
+            return np.array(content.split(), dtype=float)
+        
+    def get_samples(self, files_contents):
+        max_samples = max(len(content) for content in files_contents)
+        get_samples = np.zeros(max_samples)
+        print(files_contents)
+
+        for content in files_contents:
+            get_samples[:len(content)] += content
+
+        get_samples /= len(files_contents)
+        return get_samples
+    
+    def run_ecg (self):
+        # Get values from GUI
+        fs = self.Fs.get()
+        minF = self.miniF.get()
+        maxF = self.maxF.get()
+        newFs = self.newFs.get()
+
+        # Validate newFs
+        if newFs < 2 * fs:
+            return messagebox.showerror("Error", "Invalid value for newFs")
+
+        # Open folders and read data
+        data_A = self.open_folder("A")
+        data_B = self.open_folder("B")
+        data_x, data_y = read_file()
+
+        # Plot original signal
+        plot_signal(data_x, data_y, "Original Signal")
+
+        # Design FIR filter
+        filter_x, filter_y = design_fir_filter("Band pass", fs, 53, 0, 500, minF, maxF)
+
+        # Apply filter to the original signal
+        result_x, result_y = apply_filter(data_x, data_y, filter_x, filter_y)
+
+        # Resample the filtered signal
+        M = int(newFs / fs)
+        L = int(fs / newFs)
+        result_x, result_y = resample_signal(result_x, result_y, M, L, 'Low pass', fs, 53, 0, 500)
+
+        # Remove DC component
+        result_y = remove_dc_component(result_y)
+
+        # Normalize the signal
+        result_y = normalize_signal(result_y)
+
+        # Cross-correlation with itself
+        result_y = cross_correlation(result_y, result_y)
+
+        # Plot signal after auto-correlation
+        plot_signal(result_x, result_y, "After Auto-correlation")
+
+        # Apply Discrete Cosine Transform (DCT)
+        result_y = DCT(result_y)
+
+        # Plot signal after DCT
+        plot_signal(result_x, result_y, "After DCT")
+
+        # Perform template matching
+        template_matching_result = decide_correlation(result_y, data_A, data_B)
+
+        print("Template Matching Result:", template_matching_result)
+
+        print("Data A:", data_A)
+        print("Data B:", data_B)
+
 
 
 
@@ -346,8 +458,9 @@ def resample_signal(input_x, input_y, M, L, filter_type, fs, stop_band_attenuati
     elif M != 0 and L != 0:
         # Upsample, filter, and then downsample
         upsampled_signal = upsample(input_y, L)
+        upsampled_x = upsample(input_x, L)
         filtered_x, filtered_y = design_fir_filter(filter_type, fs, stop_band_attenuation, fc, transition_band)
-        filtered_signal_x, filtered_signal_y = apply_filter(input_x, upsampled_signal, filtered_x, filtered_y)
+        filtered_signal_x, filtered_signal_y = apply_filter(upsampled_x, upsampled_signal, filtered_x, filtered_y)
         filtered_signal_x, filtered_signal_y = filtered_signal_x[::M], filtered_signal_y[::M]
 
         continuous_indices = list(range(min(filtered_signal_x), min(filtered_signal_x) + len(filtered_signal_x)))
@@ -356,6 +469,111 @@ def resample_signal(input_x, input_y, M, L, filter_type, fs, stop_band_attenuati
 
     else:
         return messagebox.showerror("Invalid values for M and L")
+
+def process_ecg_subjects(subject_folder_A, subject_folder_B, test_folder, Fs, miniF, maxF, newFs):
+    """
+    Process ECG signals for subjects A and B from given folders and classify ECG segments in the test folder.
+
+    Parameters:
+    - subject_folder_A (str): Path to the ECG folder for subject A.
+    - subject_folder_B (str): Path to the ECG folder for subject B.
+    - test_folder (str): Path to the test ECG folder.
+    - Fs (float): Sampling frequency of the ECG signals.
+    - miniF (float): Minimum frequency for the FIR filter band.
+    - maxF (float): Maximum frequency for the FIR filter band.
+    - newFs (float): New sampling frequency for resampling.
+    """
+    # read_
+
+def read_file ():
+    file_path = filedialog.askopenfilename()
+    x_values = []
+    y_values = []
+
+    if file_path:
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+            for line in lines[3:]:
+                values = line.strip().split()
+                # x_values.append(float(values[0]))
+                y_values.append(float(values[0]))
+
+    x_values = range(len(y_values))
+
+    return x_values, y_values
+
+def remove_dc_component(x):
+    x_list = np.array([])
+    mean_value = np.mean(x)
+    for x_val in x:
+        x_list = np.append(x_list, x_val - mean_value)
+    return x_list
+
+def normalize_correlation(x1,x2,corr):
+    N = len(x1)
+    results = []
+    for n in range(N):
+        n1_sum = 0
+        n2_sum = 0
+        for j in range(N):
+            n1_sum += x1[j]**2
+            n2_sum += x2[j]**2
+        results.append(corr[n] / ((1/N)*math.sqrt(n1_sum*n2_sum)))
+
+    return results
+
+def normalize_signal(signal):
+    max_abs_value = np.max(np.abs(signal))
+
+    if max_abs_value != 0:
+        normalized_signal = signal / max_abs_value
+    else:
+        normalized_signal = signal
+
+    return normalized_signal
+
+def cross_correlation(x1, x2):
+    N = len(x1)
+    results = []
+
+    for n in range(N):
+        sum = 0
+        for j in range(N):
+            sum += x1[j]*x2[(j+n) % N]
+        results.append(((1/N)*sum))
+
+    return results
+
+def DCT(x):
+    N = len(x)
+    results = np.array([])
+
+    for k in range(N):
+        val = []
+        for new_n in range(N):
+            val.append(x[new_n] * np.cos((np.pi / (4 * N)) * (2 * new_n - 1) * (2 * k - 1)))
+        results = np.append(results, np.sum(val))
+    results *= np.sqrt(2 / N)
+
+    return results
+
+def calculate_mean_correlation(test_file, class_content):
+    num_samples = min(len(test_file), len(class_content))
+    correlation = np.corrcoef(test_file[:num_samples], class_content[:num_samples])[0, 1]
+    return correlation
+
+def decide_correlation(test_file, class1_content, class2_content):
+    correlation_class1 = calculate_mean_correlation(test_file, class1_content)
+    correlation_class2 = calculate_mean_correlation(test_file, class2_content)
+
+    result_text = f"Average Correlation with Class A: {correlation_class1:.4f}\nAverage Correlation with Class B: {correlation_class2:.4f}"
+
+    if correlation_class1 > correlation_class2:
+        result_text += "\nTemplate matches Subject A"
+    else:
+        result_text += "\nTemplate matches Subject B"
+
+    return result_text
 
 window = Tk()
 app = DSPApp(window)
