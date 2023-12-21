@@ -433,9 +433,11 @@ def resample_signal(input_x, input_y, M, L, filter_type, fs, stop_band_attenuati
     if M == 0 and L != 0:
         # Upsample by inserting L-1 zeros between each sample
         upsampled_signal = upsample(input_y, L)
+        upsampled_x = upsample(input_x, L)
+        upsampled_x = list(range(min(upsampled_x), min(upsampled_x) + len(upsampled_x)))
         print(upsampled_signal)
         filtered_x, filtered_y = design_fir_filter(filter_type, fs, stop_band_attenuation, fc, transition_band)
-        return apply_filter(input_x, upsampled_signal, filtered_x, filtered_y)
+        return apply_filter(upsampled_x, upsampled_signal, filtered_x, filtered_y)
 
     elif M != 0 and L == 0:
         # Downsample by taking every Mth sample
@@ -555,15 +557,6 @@ def decide_correlation(test_file, class1_content, class2_content):
         result_text += "\nTemplate matches Subject B"
 
     return result_text
-
-# def resample_signal(input_x, input_y, fs, new_fs):
-        # # Use scipy.signal.resample for resampling
-        # resampled_y = resample(input_y, int(len(input_y) * new_fs / fs))
-
-        # # Adjust resampled x values based on the new sampling rate
-        # resampled_x = np.linspace(input_x[0], input_x[-1], len(resampled_y))
-
-        # return resampled_x, resampled_y
 
 window = Tk()
 app = DSPApp(window)
